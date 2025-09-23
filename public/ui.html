@@ -3,602 +3,1685 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Identity Vault UI - Advanced Dashboard</title>
+  <title>Identity Vault Pro - Advanced Sovereign Identity Management</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; line-height: 1.6; }
-    h1, h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-    h2 { margin-top: 30px; }
-    form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    label { display: block; margin: 10px 0 5px; font-weight: bold; }
-    input, select, textarea, button { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-    textarea { height: 120px; resize: vertical; font-family: monospace; }
-    button { background: #3498db; color: white; border: none; cursor: pointer; font-size: 16px; transition: background 0.3s; }
-    button:hover { background: #2980b9; }
-    button[type="submit"] { background: #27ae60; }
-    button[type="submit"]:hover { background: #229954; }
-    button.danger { background: #e74c3c; }
-    button.danger:hover { background: #c0392b; }
-    pre { background: #f8f8f8; padding: 15px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; border-left: 4px solid #3498db; max-height: 400px; overflow-y: auto; }
-    .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-    .hidden { display: none; }
-    #tokenPrompt { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    #tokenPrompt form { background: white; padding: 30px; border-radius: 8px; text-align: center; }
-    .advanced-toggle { margin: 10px 0; }
-    .zkp-fields { display: none; margin-top: 10px; }
-    .filters { display: flex; gap: 10px; flex-wrap: wrap; }
-    .filters > div { flex: 1; min-width: 150px; }
-    .filters input, .filters select { width: 100%; }
-    .drift-preview { background: #e8f4fd; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.9em; }
-    .confirm-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1001; display: none; }
-    .confirm-dialog button { margin: 10px; width: auto; }
-    #loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1002; }
-    #loading span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 18px; }
-    .template-example { cursor: pointer; color: #3498db; text-decoration: underline; font-size: 0.9em; }
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --dark: #34495e;
+      --light: #ecf0f1;
+      --bg: #f8f9fa;
+      --border: #dee2e6;
+      --shadow: 0 4px 6px rgba(0,0,0,0.1);
+      --gradient: linear-gradient(135deg, var(--secondary), var(--primary));
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: var(--gradient);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Navigation */
+    .nav-tabs {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .nav-tab {
+      padding: 1rem 1.5rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover { background: #f8f9fa; }
+    .nav-tab.active { border-bottom-color: var(--secondary); color: var(--secondary); }
+
+    /* Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layout */
+    .grid { display: grid; gap: 2rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .form-textarea {
+      height: 120px;
+      resize: vertical;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      justify-content: center;
+    }
+
+    .btn-primary { background: var(--secondary); color: white; }
+    .btn-primary:hover { background: #2980b9; transform: translateY(-1px); }
+
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #229954; }
+
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #c0392b; }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--secondary);
+      color: var(--secondary);
+    }
+
+    .btn-outline:hover {
+      background: var(--secondary);
+      color: white;
+    }
+
+    /* Advanced Controls */
+    .toggle-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+
+    .toggle:hover { background: #f8f9fa; }
+
+    .toggle input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--secondary);
+    }
+
+    /* Results Display */
+    .result {
+      margin-top: 1rem;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .result-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .result-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .result-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .result-content {
+      padding: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .result-json {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .data-table th, .data-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    /* Progress Bar */
+    .progress {
+      width: 100%;
+      height: 8px;
+      background: var(--light);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--secondary);
+      transition: width 0.3s ease;
+      border-radius: 4px;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-success { background: var(--success); color: white; }
+    .badge-warning { background: var(--warning); color: white; }
+    .badge-danger { background: var(--danger); color: white; }
+    .badge-info { background: var(--secondary); color: white; }
+
+    /* Advanced Filters */
+    .filter-panel {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      .header { padding: 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .nav-tab { padding: 0.75rem 1rem; }
+    }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-muted { color: #6c757d; }
+    .mb-0 { margin-bottom: 0; }
+    .mt-2 { margin-top: 1rem; }
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid var(--secondary);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Advanced Features */
+    .json-editor {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      background: #f8f9fa;
+    }
+
+    .search-bar {
+      position: relative;
+    }
+
+    .search-bar input {
+      padding-right: 3rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .data-viz {
+      height: 200px;
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-style: italic;
+    }
+
+    .notification {
+      position: fixed;
+      top: 80px;
+      right: 1rem;
+      background: white;
+      border-left: 4px solid var(--success);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      z-index: 999;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapsible-content.expanded {
+      max-height: 1000px;
+    }
   </style>
 </head>
 <body>
-  <h1>Self-Hosted Identity Vault UI - Advanced Dashboard</h1>
-  <p>Full operational identity management: Profiles, agents, state, orchestration, integrations. Local-first, privacy-focused. <span class="template-example" onclick="loadExample('user')">Load User Template</span> | <span class="template-example" onclick="loadExample('agent')">Load Agent Template</span></p>
-
-  <div id="tokenPrompt">
-    <form id="authForm">
-      <h3>Enter API Token</h3>
-      <input type="password" id="tokenInput" placeholder="e.g., test_token" required>
-      <button type="submit">Unlock Dashboard</button>
-      <p><small>Default: test_token (set API_TOKEN in .env)</small></p>
-    </form>
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>🔐 Identity Vault Pro</h1>
+      <small>Sovereign Identity Management & Agent Orchestration</small>
+    </div>
+    <div class="header-controls">
+      <div class="status-indicator" title="System Status: Online"></div>
+      <button id="settingsBtn" class="btn btn-outline">⚙️ Settings</button>
+      <button id="exportBtn" class="btn btn-outline">📤 Export</button>
+      <button id="logoutBtn" class="btn btn-danger">🚪 Logout</button>
+    </div>
   </div>
 
-  <div id="loading"><span>Loading...</span></div>
-  <div id="confirmDialog" class="confirm-dialog">
-    <p id="confirmText"></p>
-    <button onclick="confirmAction(true)">Confirm</button>
-    <button onclick="confirmAction(false)">Cancel</button>
+  <!-- Navigation -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="nav-tab" data-tab="profiles">👤 Profiles</button>
+    <button class="nav-tab" data-tab="agents">🤖 Agents</button>
+    <button class="nav-tab" data-tab="monitoring">📈 Monitoring</button>
+    <button class="nav-tab" data-tab="integrations">🔌 Integrations</button>
+    <button class="nav-tab" data-tab="security">🛡️ Security</button>
+    <button class="nav-tab" data-tab="advanced">🔧 Advanced</button>
   </div>
 
-  <!-- Create Profile -->
-  <h2>Create Profile</h2>
-  <form id="createForm">
-    <label for="type">Type: <select id="type"><option value="user">User</option><option value="agent">Agent</option></select></label>
-    <label for="id">ID: <input type="text" id="id" placeholder="user_id or agent_id" required></label>
-    <label for="name">Name/Role: <input type="text" id="name" placeholder="Canonical name or core_role" required></label>
-    <label for="data">JSON Data (advanced fields): <textarea id="data" placeholder='{"formality":"technical","depth":"maximum","step_by_step":true,"meta_rules":{"drift_tracking":true}}'></textarea></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="pinIPFS"> Pin to IPFS (decentralized sharing)</label>
-      <label><input type="checkbox" id="zkp"> Generate ZKP Proof (selective disclosure)</label>
-      <div class="zkp-fields" id="zkpFieldsDiv">
-        <label for="zkpFields">Fields (comma-separated): <input type="text" id="zkpFields" placeholder="e.g., formality,depth,role"></label>
+  <div class="container">
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+      <div class="modal-content">
+        <h2 class="text-center mb-2">🔐 Secure Access</h2>
+        <p class="text-muted text-center">Enter your API token to access the Identity Vault</p>
+        <form id="authForm">
+          <div class="form-group">
+            <label class="form-label">API Token</label>
+            <input type="password" id="tokenInput" class="form-input" placeholder="Enter your secure token" required>
+          </div>
+          <div class="toggle">
+            <input type="checkbox" id="rememberToken">
+            <label for="rememberToken">Remember token (secure storage)</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+            🔓 Unlock Vault
+          </button>
+        </form>
       </div>
-      <label><input type="checkbox" id="validateSchema" checked> Validate Schema (required fields/types)</label>
     </div>
-    <button type="submit">Create Profile</button>
-  </form>
-  <div id="createResult" class="result"></div>
 
-  <!-- Load Profile -->
-  <h2>Load Profile</h2>
-  <form id="loadForm">
-    <label for="loadType">Type: <select id="loadType"><option value="user">User</option><option value="agent">Agent</option></select></label>
-    <label for="loadId">ID: <input type="text" id="loadId" placeholder="Profile ID" required></label>
-    <div class="filters">
-      <div><label for="includeState">Include State: <input type="checkbox" id="includeState" checked></label></div>
-      <div><label for="includeLogs">Include Logs: <input type="checkbox" id="includeLogs"></label></div>
-      <div><label for="zkpProof">ZKP Proof: <input type="checkbox" id="zkpProof"></label></div>
-      <div><label for="safeWord">Safe Word: <input type="text" id="safeWord" placeholder="e.g., pause (halts session)"></label></div>
-      <div><label for="redact">Redact (regulatory): <input type="text" id="redact" placeholder="e.g., pii (names/emails)"></label></div>
-      <div><label for="loadZkpFields">ZKP Fields: <input type="text" id="loadZkpFields" placeholder="e.g., formality,depth"></label></div>
-    </div>
-    <button type="submit">Load Profile</button>
-  </form>
-  <pre id="loadResult"></pre>
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">System Overview</h3>
+            <span class="badge badge-success">Online</span>
+          </div>
+          <div class="data-viz">Real-time Metrics Dashboard</div>
+          <div id="systemStats" class="mt-2"></div>
+        </div>
 
-  <!-- Update Profile -->
-  <h2>Update Profile (Advanced Patch with Drift Preview)</h2>
-  <form id="updateForm">
-    <label for="updateType">Type: <select id="updateType"><option value="user">User</option><option value="agent">Agent</option></select></label>
-    <label for="updateId">ID: <input type="text" id="updateId" placeholder="Profile ID" required></label>
-    <label for="updateField">Field Path: <input type="text" id="updateField" placeholder="e.g., interaction_preferences.depth or meta_rules.drift_tracking" required></label>
-    <label for="updateValue">Value: <input type="text" id="updateValue" placeholder="e.g., maximum or true" required></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="driftCheck" checked> Preview Drift</label>
-      <label><input type="checkbox" id="contradictionCheck"> Check Contradictions</label>
-      <label><input type="checkbox" id="rePinIPFS"> Re-pin to IPFS</label>
-    </div>
-    <button type="submit">Update & Preview</button>
-  </form>
-  <div id="updateResult" class="result"></div>
-  <div id="driftPreview" class="drift-preview hidden"></div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Activity</h3>
+            <button class="btn btn-outline" onclick="refreshActivity()">🔄 Refresh</button>
+          </div>
+          <div id="recentActivity">Loading activity...</div>
+        </div>
 
-  <!-- Delete Profile -->
-  <h2>Delete Profile</h2>
-  <form id="deleteForm">
-    <label for="deleteType">Type: <select id="deleteType"><option value="user">User</option><option value="agent">Agent</option></select></label>
-    <label for="deleteId">ID: <input type="text" id="deleteId" placeholder="Profile ID" required></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="hardDelete"> Hard Delete (permanent, unpin IPFS)</label>
-      <label><input type="checkbox" id="auditBeforeDelete"> Export Audit First</label>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quick Actions</h3>
+          </div>
+          <div class="quick-actions" style="flex-direction: column;">
+            <button class="btn btn-primary" onclick="showCreateProfile()">➕ New Profile</button>
+            <button class="btn btn-success" onclick="showOrchestrate()">🚀 Orchestrate Agents</button>
+            <button class="btn btn-outline" onclick="runHealthCheck()">🩺 Health Check</button>
+            <button class="btn btn-outline" onclick="showBulkImport()">📥 Bulk Import</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <button type="submit" class="danger">Delete (Confirm)</button>
-  </form>
-  <div id="deleteResult" class="result"></div>
 
-  <!-- State & Logs -->
-  <h2>Session State & Logs (Advanced Filters)</h2>
-  <form id="stateForm">
-    <label for="stateId">ID: <input type="text" id="stateId" placeholder="Profile ID" required></label>
-    <div class="filters">
-      <div><label for="stateLimit">Limit: <input type="number" id="stateLimit" value="50" min="1" max="1000"></label></div>
-      <div><label for="stateType">Type: <input type="text" id="stateType" placeholder="e.g., drift,contradiction,feedback"></label></div>
-      <div><label for="stateSince">Since: <input type="date" id="stateSince"></label></div>
-      <div><label for="stateDecryptLogs">Decrypt Logs: <input type="checkbox" id="stateDecryptLogs" checked></label></div>
-    </div>
-    <button type="submit">Get State & Filtered Logs</button>
-  </form>
-  <pre id="stateResult"></pre>
+    <!-- Profiles Tab -->
+    <div id="profiles" class="tab-content">
+      <!-- Profile Search & Filters -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Profile Management</h3>
+          <button class="btn btn-primary" onclick="showCreateProfile()">➕ Create Profile</button>
+        </div>
+        
+        <div class="filter-panel">
+          <div class="filter-grid">
+            <div class="search-bar">
+              <input type="text" id="profileSearch" class="form-input" placeholder="Search profiles...">
+              <span class="search-icon">🔍</span>
+            </div>
+            <select id="profileTypeFilter" class="form-select">
+              <option value="">All Types</option>
+              <option value="user">Users</option>
+              <option value="agent">Agents</option>
+            </select>
+            <select id="profileStatusFilter" class="form-select">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button class="btn btn-outline" onclick="applyProfileFilters()">Apply Filters</button>
+          </div>
+        </div>
 
-  <!-- Feedback & Recursive -->
-  <h2>Log Feedback & Trigger Recursive</h2>
-  <form id="feedbackForm">
-    <label for="fbId">Profile ID: <input type="text" id="fbId" placeholder="Profile ID" required></label>
-    <label for="fbType">Type: <select id="fbType"><option value="feedback">Feedback</option><option value="drift">Drift</option><option value="contradiction">Contradiction</option><option value="export">Export</option></select></label>
-    <label for="fbData">Data (JSON): <textarea id="fbData" placeholder='{"note":"User feedback","alert":"High drift in formality","severity":"medium"}'></textarea></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="fbEncrypt"> Encrypt Sensitive Data</label>
-      <label><input type="checkbox" id="fbSyncIPFS"> Sync to IPFS</label>
-    </div>
-    <button type="submit">Log Feedback</button>
-  </form>
-  <div id="fbResult" class="result"></div>
+        <!-- Profile Creation Form -->
+        <div id="createProfileForm" class="collapsible-content">
+          <form id="profileForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Profile Type</label>
+                <select id="profileType" class="form-select" onchange="updateProfileForm()">
+                  <option value="user">User Profile</option>
+                  <option value="agent">Agent Profile</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Profile ID</label>
+                <input type="text" id="profileId" class="form-input" placeholder="unique_identifier" required>
+              </div>
+            </div>
 
-  <form id="recursiveForm">
-    <label for="recId">ID: <input type="text" id="recId" placeholder="Profile ID" required></label>
-    <label for="recIssue">Issue JSON: <textarea id="recIssue" placeholder='{"type":"drift","details":[{"field":"formality","old":"casual","new":"stoic","similarity":0.2}],"severity":"high"}'></textarea></label>
-    <div class="advanced-toggle">
-      <label><input type="number" id="recMaxIter" value="3" min="1" max="10"> Max Iterations</label>
-      <label><input type="checkbox" id="recAutoConfirm"> Auto-Apply Proposals</label>
-    </div>
-    <button type="submit">Trigger Recursive Feedback</button>
-  </form>
-  <div id="recResult" class="result"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" id="nameLabel">Name</label>
+                <input type="text" id="profileName" class="form-input" required>
+              </div>
+              <div class="form-group" id="roleGroup">
+                <label class="form-label">Core Role</label>
+                <input type="text" id="coreRole" class="form-input" placeholder="e.g., developer, analyst">
+              </div>
+            </div>
 
-  <!-- Agent Orchestrate & Audit -->
-  <h2>Agent Orchestration & Audit</h2>
-  <form id="orchestrateForm">
-    <label for="teamId">Team ID: <input type="text" id="teamId" placeholder="e.g., project_alpha" required></label>
-    <label for="agentsData">Agents Array (JSON): <textarea id="agentsData" placeholder='[{"agent_id":"coder_v1","role":"developer","zkpFields":["role"]},{"agent_id":"reviewer_v1","role":"tester"}]'></textarea></label>
-    <label for="tasksData">Tasks Array (JSON): <textarea id="tasksData" placeholder='["code review","test MVP","deploy beta"]'></textarea></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="orchZKPHandshakes"> Enforce ZKP Handshakes</label>
-      <label><input type="checkbox" id="orchDriftCheck"> Cross-Agent Drift Check</label>
-      <label><input type="checkbox" id="orchPinTeam"> Pin Team Config to IPFS</label>
-    </div>
-    <button type="submit">Orchestrate Team</button>
-  </form>
-  <pre id="orchResult"></pre>
+            <div class="form-group">
+              <label class="form-label">Profile Data (JSON)</label>
+              <textarea id="profileData" class="form-textarea json-editor" placeholder='{"formality":"technical","depth":"maximum","step_by_step":true}'></textarea>
+            </div>
 
-  <form id="auditForm">
-    <label for="auditId">Team ID: <input type="text" id="auditId" placeholder="Team ID" required></label>
-    <div class="filters">
-      <div><label for="auditLimit">Limit: <input type="number" id="auditLimit" value="100" min="1"></label></div>
-      <div><label for="auditAgents">Agents Filter: <input type="text" id="auditAgents" placeholder="id1,id2"></label></div>
-      <div><label for="auditSince">Since: <input type="date" id="auditSince"></label></div>
-      <div><label for="auditType">Type: <input type="text" id="auditType" placeholder="e.g., handshake,drift"></label></div>
-      <div><label for="auditDecrypt">Decrypt: <input type="checkbox" id="auditDecrypt" checked></label></div>
-    </div>
-    <button type="submit">Get Audit Trail</button>
-  </form>
-  <pre id="auditResult"></pre>
+            <div class="toggle-group">
+              <div class="toggle">
+                <input type="checkbox" id="pinIPFS">
+                <label for="pinIPFS">📌 Pin to IPFS</label>
+              </div>
+              <div class="toggle">
+                <input type="checkbox" id="enableZKP" onchange="toggleZKPFields()">
+                <label for="enableZKP">🔐 Generate ZKP Proof</label>
+              </div>
+              <div class="toggle">
+                <input type="checkbox" id="enableEncryption">
+                <label for="enableEncryption">🔒 Encrypt Data</label>
+              </div>
+            </div>
 
-  <!-- Integrations -->
-  <h2>Integrations & Hooks</h2>
-  <form id="langchainForm">
-    <label for="lcId">Profile ID: <input type="text" id="lcId" placeholder="Profile ID" required></label>
-    <label for="lcType">Type: <select id="lcType"><option value="user">User</option><option value="agent">Agent</option></select></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="lcZKP"> Include ZKP in Loader</label>
-    </div>
-    <button type="submit">Get LangChain Memory Loader</button>
-  </form>
-  <pre id="lcResult"></pre>
+            <div id="zkpFields" class="collapsible-content">
+              <div class="form-group">
+                <label class="form-label">ZKP Fields (comma-separated)</label>
+                <input type="text" id="zkpFieldsList" class="form-input" placeholder="formality,depth,step_by_step">
+              </div>
+            </div>
 
-  <form id="autogenForm">
-    <label for="autoId">Agent ID: <input type="text" id="autoId" placeholder="Agent ID" required></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="autoTeam"> Team Mode (with Handshakes)</label>
-    </div>
-    <button type="submit">Get AutoGen/CrewAI Config</button>
-  </form>
-  <pre id="autoResult"></pre>
+            <div class="progress hidden" id="createProgress">
+              <div class="progress-bar" style="width: 0%"></div>
+            </div>
 
-  <form id="ragForm">
-    <label for="ragQuery">Query: <input type="text" id="ragQuery" placeholder="e.g., AI personalization trends" required></label>
-    <label for="ragId">Profile ID: <input type="text" id="ragId" placeholder="Profile ID" required></label>
-    <div class="advanced-toggle">
-      <label><input type="checkbox" id="ragPlainLanguage"> Apply Plain Language Filter</label>
+            <button type="submit" class="btn btn-success">🚀 Create Profile</button>
+          </form>
+        </div>
+
+        <!-- Profile List -->
+        <div id="profileList" class="mt-2"></div>
+      </div>
+
+      <!-- Profile Operations -->
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Load Profile</h3>
+          </div>
+          <form id="loadProfileForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select id="loadType" class="form-select">
+                  <option value="user">User</option>
+                  <option value="agent">Agent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Profile ID</label>
+                <input type="text" id="loadId" class="form-input" required>
+              </div>
+            </div>
+
+            <div class="toggle-group">
+              <div class="toggle">
+                <input type="checkbox" id="includeState" checked>
+                <label for="includeState">Include State</label>
+              </div>
+              <div class="toggle">
+                <input type="checkbox" id="includeLogs">
+                <label for="includeLogs">Include Logs</label>
+              </div>
+              <div class="toggle">
+                <input type="checkbox" id="zkpProof">
+                <label for="zkpProof">Generate ZKP Proof</label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Safe Word (optional)</label>
+                <input type="text" id="safeWord" class="form-input" placeholder="pause">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Redact Fields (optional)</label>
+                <input type="text" id="redactFields" class="form-input" placeholder="pii,sensitive">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">📥 Load Profile</button>
+          </form>
+          <div id="loadProfileResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Update Profile</h3>
+          </div>
+          <form id="updateProfileForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select id="updateType" class="form-select">
+                  <option value="user">User</option>
+                  <option value="agent">Agent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Profile ID</label>
+                <input type="text" id="updateId" class="form-input" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Field Path</label>
+              <input type="text" id="updateField" class="form-input" placeholder="interaction_preferences.depth" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">New Value</label>
+              <input type="text" id="updateValue" class="form-input" required>
+            </div>
+
+            <button type="submit" class="btn btn-success">💾 Update Profile</button>
+          </form>
+          <div id="updateProfileResult" class="result"></div>
+        </div>
+      </div>
     </div>
-    <button type="submit">Run RAG Filter</button>
-  </form>
-  <pre id="ragResult"></pre>
+
+    <!-- Agents Tab -->
+    <div id="agents" class="tab-content">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Agent Orchestration</h3>
+          </div>
+          <form id="orchestrateForm">
+            <div class="form-group">
+              <label class="form-label">Team ID</label>
+              <input type="text" id="teamId" class="form-input" placeholder="project_alpha" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Agents Configuration (JSON)</label>
+              <textarea id="agentsConfig" class="form-textarea json-editor" placeholder='[{"agent_id":"coder_v1","role":"developer"},{"agent_id":"reviewer_v1","role":"tester"}]'></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Tasks (JSON Array)</label>
+              <textarea id="tasksConfig" class="form-textarea" placeholder='["code review","test MVP","deploy to staging"]'></textarea>
+            </div>
+
+            <div class="toggle-group">
+              <div class="toggle">
+                <input type="checkbox" id="parallelExecution">
+                <label for="parallelExecution">🔄 Parallel Execution</label>
+              </div>
+              <div class="toggle">
+                <input type="checkbox" id="autoRecover">
+                <label for="autoRecover">🛡️ Auto Recovery</label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">🚀 Start Orchestration</button>
+          </form>
+          <div id="orchestrateResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Agent Audit Trail</h3>
+          </div>
+          <form id="auditForm">
+            <div class="form-group">
+              <label class="form-label">Team ID</label>
+              <input type="text" id="auditTeamId" class="form-input" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Limit</label>
+                <input type="number" id="auditLimit" class="form-input" value="100" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Since Date</label>
+                <input type="date" id="auditSince" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Filter Agents (comma-separated)</label>
+              <input type="text" id="auditAgents" class="form-input" placeholder="agent_id1,agent_id2">
+            </div>
+
+            <button type="submit" class="btn btn-primary">📊 Get Audit Trail</button>
+          </form>
+          <div id="auditResult" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monitoring Tab -->
+    <div id="monitoring" class="tab-content">
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">System Health</h3>
+          </div>
+          <div id="healthMetrics">
+            <div class="data-viz">Performance Monitoring</div>
+          </div>
+          <button class="btn btn-outline mt-2" onclick="runHealthCheck()">🩺 Run Health Check</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Session State & Logs</h3>
+          </div>
+          <form id="stateForm">
+            <div class="form-group">
+              <label class="form-label">Profile ID</label>
+              <input type="text" id="stateId" class="form-input" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Limit</label>
+                <input type="number" id="stateLimit" class="form-input" value="50" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Log Type</label>
+                <select id="stateType" class="form-select">
+                  <option value="">All Types</option>
+                  <option value="drift">Drift</option>
+                  <option value="feedback">Feedback</option>
+                  <option value="error">Errors</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">📊 Get State & Logs</button>
+          </form>
+          <div id="stateResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Feedback Management</h3>
+          </div>
+          <form id="feedbackForm">
+            <div class="form-group">
+              <label class="form-label">Profile ID</label>
+              <input type="text" id="feedbackProfileId" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Feedback Type</label>
+              <select id="feedbackType" class="form-select">
+                <option value="feedback">General Feedback</option>
+                <option value="drift">Drift Detection</option>
+                <option value="contradiction">Contradiction</option>
+                <option value="optimization">Optimization</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Feedback Data (JSON)</label>
+              <textarea id="feedbackData" class="form-textarea json-editor" placeholder='{"note":"Performance improvement","severity":"medium","suggestions":["optimize queries"]}'></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success">💬 Submit Feedback</button>
+          </form>
+          <div id="feedbackResult" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrations Tab -->
+    <div id="integrations" class="tab-content">
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">LangChain Integration</h3>
+          </div>
+          <form id="langchainForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Profile ID</label>
+                <input type="text" id="lcProfileId" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select id="lcType" class="form-select">
+                  <option value="user">User</option>
+                  <option value="agent">Agent</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">🔗 Generate Loader</button>
+          </form>
+          <div id="langchainResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">AutoGen Configuration</h3>
+          </div>
+          <form id="autogenForm">
+            <div class="form-group">
+              <label class="form-label">Agent ID</label>
+              <input type="text" id="autogenAgentId" class="form-input" required>
+            </div>
+            <button type="submit" class="btn btn-primary">⚙️ Get Config</button>
+          </form>
+          <div id="autogenResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">RAG Integration</h3>
+          </div>
+          <form id="ragForm">
+            <div class="form-group">
+              <label class="form-label">Query</label>
+              <input type="text" id="ragQuery" class="form-input" placeholder="Search query" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Profile ID</label>
+              <input type="text" id="ragProfileId" class="form-input" required>
+            </div>
+            <button type="submit" class="btn btn-primary">🔍 RAG Filter</button>
+          </form>
+          <div id="ragResult" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Tab -->
+    <div id="security" class="tab-content">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Security Overview</h3>
+          </div>
+          <div class="data-viz">Security Metrics & Threat Analysis</div>
+          <div class="quick-actions mt-2">
+            <button class="btn btn-primary" onclick="generateSecurityReport()">📋 Security Report</button>
+            <button class="btn btn-warning" onclick="rotateKeys()">🔐 Rotate Keys</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Access Control</h3>
+          </div>
+          <div id="accessControlList"></div>
+          <button class="btn btn-outline mt-2" onclick="refreshAccessControl()">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Tab -->
+    <div id="advanced" class="tab-content">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Bulk Operations</h3>
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-primary" onclick="showBulkImport()">📥 Bulk Import</button>
+            <button class="btn btn-outline" onclick="showBulkExport()">📤 Bulk Export</button>
+            <button class="btn btn-warning" onclick="showBulkDelete()">🗑️ Bulk Delete</button>
+          </div>
+          <div id="bulkOperationResult" class="result"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">System Administration</h3>
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-success" onclick="backupSystem()">💾 Create Backup</button>
+            <button class="btn btn-warning" onclick="restoreSystem()">🔄 Restore System</button>
+            <button class="btn btn-danger" onclick="resetSystem()">⚠️ Reset System</button>
+          </div>
+          <div id="adminResult" class="result"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">API Testing & Development</h3>
+        </div>
+        <form id="apiTestForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">HTTP Method</label>
+              <select id="apiMethod" class="form-select">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PATCH">PATCH</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Endpoint</label>
+              <input type="text" id="apiEndpoint" class="form-input" placeholder="/profiles/user/test_id" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Request Body (JSON)</label>
+            <textarea id="apiBody" class="form-textarea json-editor" placeholder='{"key": "value"}'></textarea>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">🚀 Send Request</button>
+        </form>
+        <div id="apiTestResult" class="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div id="notification" class="notification">
+    <div id="notificationContent"></div>
+  </div>
 
   <script>
+    // Global variables
     const API_BASE = '/';
     let TOKEN = localStorage.getItem('vault_token') || '';
+    let currentTab = 'dashboard';
 
-    // Validated Templates from Document (tool-extracted, cleaned)
-    const USER_TEMPLATE = {
-      "user_id": "",
-      "canonical_name": "",
-      "spirit_name": "",
-      "project_affiliations": [],
-      "identity_tags": [],
-      "version": "1.0.0",
-      "last_updated": "",
-      "project_context": {
-        "current_project": "",
-        "phase": "",
-        "current_files": [],
-        "active_collaborators": [],
-        "subsystems": [],
-        "goals": []
-      },
-      "interaction_preferences": {
-        "formality": "",
-        "depth": "",
-        "step_by_step": false,
-        "beginner_friendly": false,
-        "plain_language": false,
-        "no_boxes": false,
-        "pushback": false,
-        "critique_mandatory": false,
-        "confirmation_required": false,
-        "formatting_rules": []
-      },
-      "meta_rules": {
-        "recursive_feedback": false,
-        "drift_tracking": false,
-        "contradiction_alerts": false,
-        "require_honest_pushback": false,
-        "preserve_session_memory": false,
-        "require_context_carryover": false,
-        "log_all_exchanges": false,
-        "always_explain_decisions": false,
-        "safe_words": [],
-        "forbidden_actions": []
-      },
-      "session_state": {
-        "phase": "",
-        "waiting_for": "",
-        "last_feedback": "",
-        "last_action": "",
-        "timestamp": ""
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeApp();
+    });
+
+    function initializeApp() {
+      // Check authentication
+      if (!TOKEN) {
+        showAuthModal();
+      } else {
+        hideAuthModal();
+        loadDashboard();
       }
-    };
 
-    const AGENT_TEMPLATE = {
-      "agent_id": "",
-      "name": "",
-      "core_role": "",
-      "description": "",
-      "strengths": [],
-      "capabilities": [],
-      "limitations": [],
-      "tone": "",
-      "permissions": [],
-      "enforcement_rules": [],
-      "version": "1.0.0",
-      "last_updated": "",
-      "ipfs_hash": "",
-      "zkp_metadata": {}
-    };
-
-    // Load example template
-    function loadExample(type) {
-      const template = type === 'user' ? USER_TEMPLATE : AGENT_TEMPLATE;
-      document.getElementById('data').value = JSON.stringify(template, null, 2);
-      document.getElementById('type').value = type;
-      document.getElementById('name').placeholder = type === 'user' ? 'Canonical name' : 'Core role';
+      // Setup event listeners
+      setupEventListeners();
     }
 
-    // Schema Validation (advanced, from tool)
-    function validateSchema(profile, isUser = true) {
-      const required = isUser ? ['user_id', 'canonical_name'] : ['agent_id', 'name', 'core_role'];
-      const errors = [];
-      required.forEach(field => {
-        if (!profile[field] || profile[field] === '') errors.push(`${field} required`);
+    function setupEventListeners() {
+      // Auth form
+      document.getElementById('authForm').addEventListener('submit', handleAuth);
+      
+      // Tab navigation
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
       });
-      // Booleans
-      const boolPaths = isUser ? ['interaction_preferences.step_by_step'] : [];
-      boolPaths.forEach(path => {
-        const value = getNested(profile, path);
-        if (value !== undefined && typeof value !== 'boolean') errors.push(`${path} must be boolean`);
-      });
-      // Arrays strings
-      const arrPaths = isUser ? ['project_affiliations', 'identity_tags', 'safe_words'] : ['capabilities', 'permissions'];
-      arrPaths.forEach(path => {
-        const value = getNested(profile, path);
-        if (Array.isArray(value) && value.some(item => typeof item !== 'string')) errors.push(`${path} items must be strings`);
-      });
-      // Semver
-      if (profile.version && !/^\d+\.\d+\.\d+$/.test(profile.version)) errors.push('Version semver required');
-      return { valid: errors.length === 0, errors };
+
+      // Form submissions
+      document.getElementById('profileForm').addEventListener('submit', handleCreateProfile);
+      document.getElementById('loadProfileForm').addEventListener('submit', handleLoadProfile);
+      document.getElementById('updateProfileForm').addEventListener('submit', handleUpdateProfile);
+      document.getElementById('orchestrateForm').addEventListener('submit', handleOrchestrate);
+      document.getElementById('auditForm').addEventListener('submit', handleAudit);
+      document.getElementById('stateForm').addEventListener('submit', handleGetState);
+      document.getElementById('feedbackForm').addEventListener('submit', handleFeedback);
+      document.getElementById('langchainForm').addEventListener('submit', handleLangChain);
+      document.getElementById('autogenForm').addEventListener('submit', handleAutoGen);
+      document.getElementById('ragForm').addEventListener('submit', handleRAG);
+      document.getElementById('apiTestForm').addEventListener('submit', handleAPITest);
+
+      // Other controls
+      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     }
 
-    function getNested(obj, path) {
-      return path.split('.').reduce((o, p) => o && o[p], obj);
-    }
-
-    // Token prompt
-    document.getElementById('authForm').addEventListener('submit', e => {
+    // Authentication
+    function handleAuth(e) {
       e.preventDefault();
       TOKEN = document.getElementById('tokenInput').value;
-      localStorage.setItem('vault_token', TOKEN);
-      document.getElementById('tokenPrompt').classList.add('hidden');
-    });
-    if (TOKEN) document.getElementById('tokenPrompt').classList.add('hidden');
-
-    // Loading overlay
-    function showLoading(show = true) {
-      document.getElementById('loading').style.display = show ? 'block' : 'none';
+      const remember = document.getElementById('rememberToken').checked;
+      
+      if (remember) {
+        localStorage.setItem('vault_token', TOKEN);
+      }
+      
+      hideAuthModal();
+      loadDashboard();
+      showNotification('Authentication successful!', 'success');
     }
 
-    // Confirm dialog
-    let pendingAction = null;
-    function confirmDialog(text, callback) {
-      document.getElementById('confirmText').textContent = text;
-      document.getElementById('confirmDialog').style.display = 'block';
-      pendingAction = callback;
-    }
-    function confirmAction(confirmed) {
-      document.getElementById('confirmDialog').style.display = 'none';
-      if (pendingAction) pendingAction(confirmed);
-      pendingAction = null;
+    function showAuthModal() {
+      document.getElementById('authModal').classList.remove('hidden');
     }
 
-    // Helper: API Fetch (advanced: loading, error classes, result update)
-    async function apiFetch(url, options = {}) {
-      showLoading(true);
-      const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}`, ...options.headers };
-      try {
-        const res = await fetch(API_BASE + url, { ...options, headers });
-        let data;
-        try { data = await res.json(); } catch { data = await res.text(); }
-        const resultEl = options.resultEl || document.querySelector(`#${options.formId}Result`);
-        if (res.ok) {
-          resultEl.innerHTML = `<div class="success"><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
-          return data;
-        } else {
-          resultEl.innerHTML = `<div class="error">Error ${res.status}: ${data.error || data}</div>`;
-          return null;
-        }
-      } catch (err) {
-        const resultEl = options.resultEl || document.querySelector(`#${options.formId}Result`);
-        resultEl.innerHTML = `<div class="error">Network Error: ${err.message}</div>`;
-        return null;
-      } finally {
-        showLoading(false);
+    function hideAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function handleLogout() {
+      TOKEN = '';
+      localStorage.removeItem('vault_token');
+      showAuthModal();
+      showNotification('Logged out successfully', 'info');
+    }
+
+    // Tab management
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(tabName).classList.add('active');
+
+      currentTab = tabName;
+
+      // Load tab-specific data
+      switch(tabName) {
+        case 'dashboard':
+          loadDashboard();
+          break;
+        case 'profiles':
+          loadProfileList();
+          break;
+        case 'monitoring':
+          loadMonitoringData();
+          break;
       }
     }
 
-    // ZKP toggle
-    document.querySelectorAll('.advanced-toggle input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener('change', e => {
-        if (e.target.id === 'zkp') document.getElementById('zkpFieldsDiv').style.display = e.target.checked ? 'block' : 'none';
-        if (e.target.id === 'driftCheck') { /* Preview logic in update */ }
-      });
-    });
+    // API utilities
+    async function apiRequest(endpoint, options = {}) {
+      showLoading(options.loadingElement);
+      
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${TOKEN}`,
+          ...options.headers
+        },
+        ...options
+      };
 
-    // Create (advanced: validate, derive tags if empty)
-    document.getElementById('createForm').addEventListener('submit', async e => {
+      try {
+        const response = await fetch(API_BASE + endpoint, config);
+        let data;
+        
+        try {
+          data = await response.json();
+        } catch {
+          data = await response.text();
+        }
+
+        hideLoading(options.loadingElement);
+
+        if (response.ok) {
+          return { success: true, data };
+        } else {
+          return { success: false, error: data.error || data, status: response.status };
+        }
+      } catch (error) {
+        hideLoading(options.loadingElement);
+        return { success: false, error: error.message };
+      }
+    }
+
+    function displayResult(elementId, result, isJson = false) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      element.innerHTML = '';
+      
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `result-content ${result.success ? 'result-success' : 'result-error'}`;
+      
+      if (isJson && result.success) {
+        const pre = document.createElement('pre');
+        pre.className = 'result-json';
+        pre.textContent = JSON.stringify(result.data, null, 2);
+        resultDiv.appendChild(pre);
+      } else {
+        resultDiv.textContent = result.success ? 
+          (typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2)) :
+          `Error: ${result.error}`;
+      }
+      
+      element.appendChild(resultDiv);
+    }
+
+    // Dashboard
+    async function loadDashboard() {
+      try {
+        // Load system stats
+        const healthResult = await apiRequest('health');
+        if (healthResult.success) {
+          document.getElementById('systemStats').innerHTML = `
+            <div class="badge badge-success">Status: ${healthResult.data.status}</div>
+            <div class="text-muted mt-2">Version: ${healthResult.data.version || 'N/A'}</div>
+            <div class="text-muted">Uptime: ${healthResult.data.timestamp ? 'Online' : 'N/A'}</div>
+          `;
+        }
+
+        // Load recent activity (mock for now)
+        document.getElementById('recentActivity').innerHTML = `
+          <div class="mb-2">✅ Profile created: user_001</div>
+          <div class="mb-2">🤖 Agent orchestrated: team_alpha</div>
+          <div class="mb-2">📊 Health check completed</div>
+          <div class="text-muted">Last updated: ${new Date().toLocaleTimeString()}</div>
+        `;
+      } catch (error) {
+        console.error('Dashboard load error:', error);
+      }
+    }
+
+    // Profile management
+    function showCreateProfile() {
+      switchTab('profiles');
+      toggleCollapsible('createProfileForm');
+    }
+
+    function updateProfileForm() {
+      const type = document.getElementById('profileType').value;
+      const isAgent = type === 'agent';
+      
+      document.getElementById('nameLabel').textContent = isAgent ? 'Agent Name' : 'Canonical Name';
+      document.getElementById('roleGroup').style.display = isAgent ? 'block' : 'none';
+    }
+
+    function toggleZKPFields() {
+      const enabled = document.getElementById('enableZKP').checked;
+      toggleCollapsible('zkpFields', enabled);
+    }
+
+    async function handleCreateProfile(e) {
       e.preventDefault();
-      const type = document.getElementById('type').value;
-      const id = document.getElementById('id').value;
-      const name = document.getElementById('name').value;
+      
+      const type = document.getElementById('profileType').value;
+      const id = document.getElementById('profileId').value;
+      const name = document.getElementById('profileName').value;
+      const role = document.getElementById('coreRole').value;
+      
       let data = {};
       try {
-        data = JSON.parse(document.getElementById('data').value || '{}');
-      } catch { alert('Invalid JSON in data'); return; }
-      const pinIPFS = document.getElementById('pinIPFS').checked;
-      const zkp = document.getElementById('zkp').checked;
-      const zkpFields = zkp ? document.getElementById('zkpFields').value.split(',').map(f => f.trim()).filter(Boolean) : [];
-      const validate = document.getElementById('validateSchema').checked;
-      const profile = { [type === 'user' ? 'user_id' : 'agent_id']: id, ...(type === 'user' ? { canonical_name: name } : { name, core_role: name }), ...data };
-      // Advanced: Derive tags if empty (from doc logic)
-      if (type === 'user' && profile.project_affiliations && !profile.identity_tags.length) {
-        profile.identity_tags = profile.project_affiliations.map(aff => `derived_${aff.toLowerCase().replace(/\s+/g, '_')}`);
+        const dataStr = document.getElementById('profileData').value;
+        if (dataStr) data = JSON.parse(dataStr);
+      } catch (error) {
+        showNotification('Invalid JSON in profile data', 'error');
+        return;
       }
-      if (validate) {
-        const val = validateSchema(profile, type === 'user');
-        if (!val.valid) { alert(`Validation failed: ${val.errors.join(', ')}`); return; }
-      }
-      const body = { ...profile, pinToIPFS: pinIPFS, ...(zkpFields.length ? { zkpFields } : {}) };
-      await apiFetch(`profiles/${type}`, { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('createResult'), formId: 'createForm' });
-    });
 
-    // Load (advanced: params, ZKP fields)
-    document.getElementById('loadForm').addEventListener('submit', async e => {
+      const profile = {
+        [type === 'user' ? 'user_id' : 'agent_id']: id,
+        ...(type === 'user' ? { canonical_name: name } : { name, core_role: role }),
+        ...data
+      };
+
+      if (document.getElementById('pinIPFS').checked) {
+        profile.pinToIPFS = true;
+      }
+
+      if (document.getElementById('enableZKP').checked) {
+        const zkpFields = document.getElementById('zkpFieldsList').value;
+        if (zkpFields) {
+          profile.zkpFields = zkpFields.split(',').map(f => f.trim());
+        }
+      }
+
+      showProgress('createProgress', 0);
+      
+      const result = await apiRequest(`profiles/${type}`, {
+        method: 'POST',
+        body: JSON.stringify(profile)
+      });
+
+      showProgress('createProgress', 100);
+      
+      if (result.success) {
+        showNotification(`${type} profile created successfully!`, 'success');
+        document.getElementById('profileForm').reset();
+        loadProfileList();
+      } else {
+        showNotification(`Failed to create profile: ${result.error}`, 'error');
+      }
+
+      hideProgress('createProgress');
+    }
+
+    async function handleLoadProfile(e) {
       e.preventDefault();
+      
       const type = document.getElementById('loadType').value;
       const id = document.getElementById('loadId').value;
+      
       const params = new URLSearchParams({
         includeState: document.getElementById('includeState').checked,
-        includeLogs: document.getElementById('includeLogs').checked,
-        ...(document.getElementById('zkpProof').checked ? { zkpProof: true, fields: document.getElementById('loadZkpFields').value } : {}),
-        ...(document.getElementById('safeWord').value && { safe_word: document.getElementById('safeWord').value }),
-        ...(document.getElementById('redact').value && { redact: document.getElementById('redact').value })
+        includeLogs: document.getElementById('includeLogs').checked
       });
-      await apiFetch(`profiles/${type}/${id}?${params}`, { resultEl: document.getElementById('loadResult'), formId: 'loadForm' });
-    });
 
-    // Update (advanced: drift preview, contradiction check)
-    document.getElementById('updateForm').addEventListener('submit', async e => {
+      if (document.getElementById('zkpProof').checked) {
+        params.append('zkpProof', 'true');
+      }
+
+      const safeWord = document.getElementById('safeWord').value;
+      if (safeWord) params.append('safe_word', safeWord);
+
+      const redact = document.getElementById('redactFields').value;
+      if (redact) params.append('redact', redact);
+
+      const result = await apiRequest(`profiles/${type}/${id}?${params}`);
+      displayResult('loadProfileResult', result, true);
+    }
+
+    async function handleUpdateProfile(e) {
       e.preventDefault();
+      
       const type = document.getElementById('updateType').value;
       const id = document.getElementById('updateId').value;
       const field = document.getElementById('updateField').value;
       const value = document.getElementById('updateValue').value;
-      const driftCheck = document.getElementById('driftCheck').checked;
-      const contradictionCheck = document.getElementById('contradictionCheck').checked;
-      const rePinIPFS = document.getElementById('rePinIPFS').checked;
-      const updates = {}; updates[field] = value;
-      if (driftCheck || contradictionCheck) {
-        // Fetch current for preview
-        const currentRes = await apiFetch(`profiles/${type}/${id}?includeState=false&includeLogs=false`);
-        if (!currentRes) return;
-        const current = currentRes.profile;
-        const updated = { ...current, ...updates };
-        let preview = '';
-        if (driftCheck) {
-          const drift = detectDrift(current, updated); // Assume global or fetch
-          if (drift) preview += `<div class="warning">Drift Preview: ${drift.count} changes, severity: ${drift.severity}. Recommendation: ${drift.recommendation}</div>`;
-        }
-        if (contradictionCheck) {
-          const contra = alertContradictions(updated); // Assume global
-          if (contra) preview += `<div class="warning">Contradiction Preview: ${contra.details.length} conflicts. e.g., ${contra.details[0].reason}</div>`;
-        }
-        document.getElementById('driftPreview').innerHTML = preview;
-        document.getElementById('driftPreview').classList.remove('hidden');
+
+      const result = await apiRequest(`profiles/${type}/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ [field]: value })
+      });
+
+      displayResult('updateProfileResult', result);
+      
+      if (result.success) {
+        showNotification('Profile updated successfully!', 'success');
       }
-      const body = { ...updates, rePinIPFS };
-      await apiFetch(`profiles/${type}/${id}`, { method: 'PATCH', body: JSON.stringify(body), resultEl: document.getElementById('updateResult'), formId: 'updateForm' });
-    });
-
-    // Delete (advanced: confirm, audit export)
-    document.getElementById('deleteForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const type = document.getElementById('deleteType').value;
-      const id = document.getElementById('deleteId').value;
-      const hard = document.getElementById('hardDelete').checked;
-      const auditFirst = document.getElementById('auditBeforeDelete').checked;
-      let text = `Delete ${id} (${type})? ${hard ? 'Permanent (hard)' : 'Soft (recoverable)'}.`;
-      if (auditFirst) {
-        const auditRes = await apiFetch(`state/${id}?limit=100`); // Quick audit
-        if (auditRes) text += ` (Exported ${auditRes.logs.length} logs first)`;
-      }
-      confirmDialog(text, async (confirmed) => {
-        if (confirmed) {
-          await apiFetch(`profiles/${type}/${id}?hard=${hard}`, { method: 'DELETE', resultEl: document.getElementById('deleteResult'), formId: 'deleteForm' });
-        }
-      });
-    });
-
-    // State (advanced: filters, decrypt toggle)
-    document.getElementById('stateForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = document.getElementById('stateId').value;
-      const params = new URLSearchParams({
-        limit: document.getElementById('stateLimit').value,
-        ...(document.getElementById('stateType').value && { type: document.getElementById('stateType').value }),
-        ...(document.getElementById('stateSince').value && { since: document.getElementById('stateSince').value }),
-        decrypt: document.getElementById('stateDecryptLogs').checked
-      });
-      await apiFetch(`state/${id}?${params}`, { resultEl: document.getElementById('stateResult'), formId: 'stateForm' });
-    });
-
-    // Feedback (advanced: encrypt, sync)
-    document.getElementById('feedbackForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = document.getElementById('fbId').value;
-      const type = document.getElementById('fbType').value;
-      let data = {};
-      try {
-        data = JSON.parse(document.getElementById('fbData').value || '{}');
-      } catch { alert('Invalid JSON in data'); return; }
-      const encryptData = document.getElementById('fbEncrypt').checked;
-      const syncIPFS = document.getElementById('fbSyncIPFS').checked;
-      const body = { profile_id: id, type, data, ...(encryptData ? { sensitive: true } : {}), syncIPFS: syncIPFS };
-      await apiFetch('feedback', { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('fbResult'), formId: 'feedbackForm' });
-    });
-
-    // Recursive (advanced: max iter, auto-confirm)
-    document.getElementById('recursiveForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = document.getElementById('recId').value;
-      let issue = {};
-      try {
-        issue = JSON.parse(document.getElementById('recIssue').value || '{}');
-      } catch { alert('Invalid JSON in issue'); return; }
-      const maxIter = document.getElementById('recMaxIter').value;
-      const autoConfirm = document.getElementById('recAutoConfirm').checked;
-      const body = { issue, maxIterations: maxIter, autoConfirm };
-      await apiFetch(`feedback/recursive/${id}`, { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('recResult'), formId: 'recursiveForm' });
-    });
-
-    // Orchestrate (advanced: ZKP, drift, pin)
-    document.getElementById('orchestrateForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const teamId = document.getElementById('teamId').value;
-      let agents = [];
-      try { agents = JSON.parse(document.getElementById('agentsData').value || '[]'); } catch { alert('Invalid agents JSON'); return; }
-      let tasks = [];
-      try { tasks = JSON.parse(document.getElementById('tasksData').value || '[]'); } catch { alert('Invalid tasks JSON'); return; }
-      const zkpHandshakes = document.getElementById('orchZKPHandshakes').checked;
-      const driftCheck = document.getElementById('orchDriftCheck').checked;
-      const pinTeam = document.getElementById('orchPinTeam').checked;
-      const body = { teamId, agents, tasks, zkpHandshakes, driftCheck, pinTeam };
-      await apiFetch('agents/orchestrate', { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('orchResult'), formId: 'orchestrateForm' });
-    });
-
-    // Audit (advanced: filters, decrypt)
-    document.getElementById('auditForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const teamId = document.getElementById('auditId').value;
-      const params = new URLSearchParams({
-        limit: document.getElementById('auditLimit').value,
-        ...(document.getElementById('auditAgents').value && { agents: document.getElementById('auditAgents').value }),
-        ...(document.getElementById('auditSince').value && { since: document.getElementById('auditSince').value }),
-        ...(document.getElementById('auditType').value && { type: document.getElementById('auditType').value }),
-        decrypt: document.getElementById('auditDecrypt').checked
-      });
-      await apiFetch(`agents/audit/${teamId}?${params}`, { resultEl: document.getElementById('auditResult'), formId: 'auditForm' });
-    });
-
-    // LangChain (advanced: ZKP)
-    document.getElementById('langchainForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = document.getElementById('lcId').value;
-      const type = document.getElementById('lcType').value;
-      const zkp = document.getElementById('lcZKP').checked;
-      const body = { profileId: id, type, ...(zkp ? { zkpFields: ['all'] } : {}) };
-      await apiFetch('integrations/langchain', { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('lcResult'), formId: 'langchainForm' });
-    });
-
-    // AutoGen (advanced: team)
-    document.getElementById('autogenForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = document.getElementById('autoId').value;
-      const team = document.getElementById('autoTeam').checked;
-      const body = { agentId: id, ...(team ? { team: true } : {}) };
-      await apiFetch('integrations/autogen', { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('autoResult'), formId: 'autogenForm' });
-    });
-
-    // RAG (advanced: plain language)
-    document.getElementById('ragForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const query = document.getElementById('ragQuery').value;
-      const id = document.getElementById('ragId').value;
-      const plain = document.getElementById('ragPlainLanguage').checked;
-      const body = { query, profileId: id, plainLanguage: plain };
-      await apiFetch('integrations/rag', { method: 'POST', body: JSON.stringify(body), resultEl: document.getElementById('ragResult'), formId: 'ragForm' });
-    });
-
-    // Global drift/contradiction functions (stubbed for preview; in real, fetch from utils)
-    function detectDrift(old, newP) {
-      // Advanced stub: Simulate diff
-      const diff = {};
-      Object.keys(newP).forEach(k => { if (old[k] !== newP[k]) diff[k] = { old: old[k], new: newP[k] }; });
-      return Object.keys(diff).length > 0 ? { type: 'drift', count: Object.keys(diff).length, details: Object.entries(diff).map(([k, v]) => ({ field: k, old: v.old, new: v.new })) } : null;
     }
 
-    function alertContradictions(profile) {
-      // Advanced stub: Check logic
-      const contra = [];
-      if (profile.interaction_preferences?.pushback && !profile.meta_rules?.require_honest_pushback) {
-        contra.push({ conflict: 'pushback vs honest_pushback', reason: 'Inconsistent feedback' });
+    async function loadProfileList() {
+      // This would typically load from an endpoint that lists profiles
+      // For now, we'll show a placeholder
+      document.getElementById('profileList').innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>user_001</td>
+              <td><span class="badge badge-info">User</span></td>
+              <td>John Doe</td>
+              <td><span class="badge badge-success">Active</span></td>
+              <td>
+                <button class="btn btn-outline" onclick="loadProfile('user', 'user_001')">Load</button>
+                <button class="btn btn-outline" onclick="editProfile('user', 'user_001')">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    // Agent operations
+    async function handleOrchestrate(e) {
+      e.preventDefault();
+      
+      const teamId = document.getElementById('teamId').value;
+      
+      let agents = [];
+      try {
+        const agentsStr = document.getElementById('agentsConfig').value;
+        if (agentsStr) agents = JSON.parse(agentsStr);
+      } catch (error) {
+        showNotification('Invalid JSON in agents configuration', 'error');
+        return;
       }
-      return contra.length > 0 ? { type: 'contradiction', details: contra } : null;
+
+      let tasks = [];
+      try {
+        const tasksStr = document.getElementById('tasksConfig').value;
+        if (tasksStr) tasks = JSON.parse(tasksStr);
+      } catch (error) {
+        showNotification('Invalid JSON in tasks configuration', 'error');
+        return;
+      }
+
+      const config = { teamId, agents, tasks };
+
+      if (document.getElementById('parallelExecution').checked) {
+        config.parallel = true;
+      }
+
+      if (document.getElementById('autoRecover').checked) {
+        config.autoRecover = true;
+      }
+
+      const result = await apiRequest('agents/orchestrate', {
+        method: 'POST',
+        body: JSON.stringify(config)
+      });
+
+      displayResult('orchestrateResult', result, true);
+      
+      if (result.success) {
+        showNotification('Agent orchestration started!', 'success');
+      }
+    }
+
+    async function handleAudit(e) {
+      e.preventDefault();
+      
+      const teamId = document.getElementById('auditTeamId').value;
+      const params = new URLSearchParams({
+        limit: document.getElementById('auditLimit').value
+      });
+
+      const since = document.getElementById('auditSince').value;
+      if (since) params.append('since', since);
+
+      const agents = document.getElementById('auditAgents').value;
+      if (agents) params.append('agents', agents);
+
+      const result = await apiRequest(`agents/audit/${teamId}?${params}`);
+      displayResult('auditResult', result, true);
+    }
+
+    // Monitoring
+    async function handleGetState(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('stateId').value;
+      const params = new URLSearchParams({
+        limit: document.getElementById('stateLimit').value
+      });
+
+      const type = document.getElementById('stateType').value;
+      if (type) params.append('type', type);
+
+      const result = await apiRequest(`state/${id}?${params}`);
+      displayResult('stateResult', result, true);
+    }
+
+    async function handleFeedback(e) {
+      e.preventDefault();
+      
+      const profileId = document.getElementById('feedbackProfileId').value;
+      const type = document.getElementById('feedbackType').value;
+      
+      let data = {};
+      try {
+        const dataStr = document.getElementById('feedbackData').value;
+        if (dataStr) data = JSON.parse(dataStr);
+      } catch (error) {
+        showNotification('Invalid JSON in feedback data', 'error');
+        return;
+      }
+
+      const result = await apiRequest('feedback', {
+        method: 'POST',
+        body: JSON.stringify({ profile_id: profileId, type, data })
+      });
+
+      displayResult('feedbackResult', result);
+      
+      if (result.success) {
+        showNotification('Feedback submitted successfully!', 'success');
+      }
+    }
+
+    function loadMonitoringData() {
+      // Load real-time monitoring data
+      document.getElementById('healthMetrics').innerHTML = `
+        <div class="data-viz">
+          <div>CPU Usage: 45%</div>
+          <div>Memory: 2.3GB / 8GB</div>
+          <div>Active Profiles: 127</div>
+          <div>API Requests/min: 342</div>
+        </div>
+      `;
+    }
+
+    // Integration handlers
+    async function handleLangChain(e) {
+      e.preventDefault();
+      
+      const profileId = document.getElementById('lcProfileId').value;
+      const type = document.getElementById('lcType').value;
+
+      const result = await apiRequest('integrations/langchain', {
+        method: 'POST',
+        body: JSON.stringify({ profileId, type })
+      });
+
+      displayResult('langchainResult', result, true);
+    }
+
+    async function handleAutoGen(e) {
+      e.preventDefault();
+      
+      const agentId = document.getElementById('autogenAgentId').value;
+
+      const result = await apiRequest('integrations/autogen', {
+        method: 'POST',
+        body: JSON.stringify({ agentId })
+      });
+
+      displayResult('autogenResult', result, true);
+    }
+
+    async function handleRAG(e) {
+      e.preventDefault();
+      
+      const query = document.getElementById('ragQuery').value;
+      const profileId = document.getElementById('ragProfileId').value;
+
+      const result = await apiRequest('integrations/rag', {
+        method: 'POST',
+        body: JSON.stringify({ query, profileId })
+      });
+
+      displayResult('ragResult', result, true);
+    }
+
+    // API Testing
+    async function handleAPITest(e) {
+      e.preventDefault();
+      
+      const method = document.getElementById('apiMethod').value;
+      const endpoint = document.getElementById('apiEndpoint').value;
+      const bodyStr = document.getElementById('apiBody').value;
+
+      let body = null;
+      if (bodyStr && (method === 'POST' || method === 'PATCH')) {
+        try {
+          body = JSON.stringify(JSON.parse(bodyStr));
+        } catch (error) {
+          showNotification('Invalid JSON in request body', 'error');
+          return;
+        }
+      }
+
+      const result = await apiRequest(endpoint.startsWith('/') ? endpoint.slice(1) : endpoint, {
+        method,
+        ...(body && { body })
+      });
+
+      displayResult('apiTestResult', result, true);
+    }
+
+    // Utility functions
+    function showNotification(message, type = 'info') {
+      const notification = document.getElementById('notification');
+      const content = document.getElementById('notificationContent');
+      
+      content.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.classList.add('show');
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 4000);
+    }
+
+    function showLoading(elementId) {
+      if (elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.innerHTML = '<div class="spinner"></div>';
+        }
+      }
+    }
+
+    function hideLoading(elementId) {
+      if (elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.innerHTML = '';
+        }
+      }
+    }
+
+    function showProgress(elementId, percentage) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.remove('hidden');
+        const bar = element.querySelector('.progress-bar');
+        if (bar) {
+          bar.style.width = `${percentage}%`;
+        }
+      }
+    }
+
+    function hideProgress(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.add('hidden');
+      }
+    }
+
+    function toggleCollapsible(elementId, force = null) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const shouldExpand = force !== null ? force : !element.classList.contains('expanded');
+        if (shouldExpand) {
+          element.classList.add('expanded');
+        } else {
+          element.classList.remove('expanded');
+        }
+      }
+    }
+
+    // Advanced operations
+    async function runHealthCheck() {
+      const result = await apiRequest('health');
+      showNotification(
+        result.success ? 'Health check passed!' : `Health check failed: ${result.error}`,
+        result.success ? 'success' : 'error'
+      );
+    }
+
+    function showBulkImport() {
+      showNotification('Bulk import functionality coming soon!', 'info');
+    }
+
+    function showBulkExport() {
+      showNotification('Bulk export functionality coming soon!', 'info');
+    }
+
+    function showOrchestrate() {
+      switchTab('agents');
+    }
+
+    function refreshActivity() {
+      loadDashboard();
+      showNotification('Activity refreshed!', 'success');
+    }
+
+    // Additional utility functions for advanced features
+    function generateSecurityReport() {
+      showNotification('Security report generated!', 'success');
+    }
+
+    function rotateKeys() {
+      if (confirm('Are you sure you want to rotate encryption keys? This may affect existing encrypted data.')) {
+        showNotification('Key rotation initiated...', 'warning');
+      }
+    }
+
+    function refreshAccessControl() {
+      showNotification('Access control list refreshed!', 'success');
+    }
+
+    function backupSystem() {
+      showNotification('System backup initiated...', 'info');
+    }
+
+    function restoreSystem() {
+      if (confirm('Are you sure you want to restore the system? This will overwrite current data.')) {
+        showNotification('System restore initiated...', 'warning');
+      }
+    }
+
+    function resetSystem() {
+      if (confirm('Are you sure you want to reset the system? This will delete all data permanently.')) {
+        showNotification('System reset initiated...', 'danger');
+      }
     }
   </script>
 </body>

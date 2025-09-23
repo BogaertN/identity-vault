@@ -23,7 +23,21 @@ const { detectDrift } = require('./utils/drift');
 const { autogenHook, orchestrationHook } = require('./utils/integrations');
 const ngrok = require('ngrok');
 const fs = require('fs');
-const path = require('path');
+const path = require('path'); function makeAuthenticatedRequest(method, url, data = null) {
+  const headers = {};
+  if (process.env.API_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.API_TOKEN}`;
+  }
+  headers['Content-Type'] = 'application/json';
+  
+  // Use axios or native fetch with proper headers
+  return axios({
+    method,
+    url: `http://localhost:${process.env.PORT || 3000}${url}`,
+    data,
+    headers
+  });
+}
 
 // Colors for output
 const log = {
